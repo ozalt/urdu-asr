@@ -1,0 +1,29 @@
+{
+ "name": "finetuned",
+ "model": "runs/urdu-0.6b/checkpoint-1000",
+ "language": "Urdu",
+ "sets": {
+  "test_cv": {
+   "clips": 5071,
+   "wer": 0.255,
+   "cer": 0.0986,
+   "output_script": {
+    "urdu": 5071
+   },
+   "detected_language": {
+    "Urdu": 5071
+   }
+  },
+  "test_fleurs": {
+   "clips": 299,
+   "wer": 0.2673,
+   "cer": 0.1083,
+   "output_script": {
+    "urdu": 299
+   },
+   "detected_language": {
+    "Urdu": 299
+   }
+  }
+ }
+}

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Urdu Speech to Text</title>
+<style>
+  :root { --bg:#f6f6f3; --card:#fff; --ink:#1b1b1b; --muted:#666; --line:#e2e2dc; --accent:#0b6e4f; --base:#8a8a8a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#151614; --card:#1f201e; --ink:#ececea; --muted:#a0a09a; --line:#33342f; --accent:#4cc79a; --base:#9a9a9a; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { margin:0; font-size:26px; }
+  .sub { color:var(--muted); margin:4px 0 20px; }
+  .bar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; background:var(--card); border:1px solid var(--line);
+         border-radius:12px; padding:14px; }
+  button, select, label.file { font:inherit; padding:9px 16px; border-radius:8px; border:1px solid var(--line);
+         background:var(--bg); color:var(--ink); cursor:pointer; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  button.rec { background:#c0392b; border-color:#c0392b; }
+  label.file input { display:none; }
+  select { max-width:100%; }
+  audio { width:100%; margin-top:14px; }
+  .status { color:var(--muted); margin:12px 2px; min-height:24px; }
+  .ref { background:var(--card); border:1px dashed var(--line); border-radius:12px; padding:12px 14px; margin-bottom:14px; }
+  .ref h3, .card h3 { margin:0 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; border-top:4px solid var(--base); }
+  .card.ours { border-top-color:var(--accent); }
+  .text { font-size:18px; min-height:2em; overflow-wrap:anywhere; }
+  .ur { font-family:"Noto Nastaliq Urdu","Noto Naskh Arabic","Jameel Noori Nastaleeq",serif; font-size:21px; line-height:2.1; }
+  .meta { color:var(--muted); font-size:13px; margin-top:8px; }
+  footer { color:var(--muted); font-size:13px; margin-top:22px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Urdu Speech to Text</h1>
+  <p class="sub">Qwen3-ASR-0.6B fine-tuned for Urdu script and Roman Urdu. Running offline on this laptop's CPU with llama.cpp.</p>
+
+  <div class="bar">
+    <button id="rec" class="primary">● Record</button>
+    <label class="file">Upload audio<input id="file" type="file" accept="audio/*"></label>
+    <select id="sample"><option value="">Unseen test clip (FLEURS)…</option></select>
+  </div>
+  <audio id="player" controls hidden></audio>
+  <div class="status" id="status">Record yourself speaking Urdu, upload a file, or pick a test clip.</div>
+
+  <div class="ref" id="ref" hidden>
+    <h3>What was said (human transcript)</h3>
+    <div class="text ur" dir="rtl" id="refText"></div>
+    <div class="text" id="refRoman"></div>
+    <div class="meta">Roman Urdu line: the transcript romanized by our Qwen3.5-0.8B romanizer.</div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <footer>Both models: Q8_0 decoder with a 16-bit audio encoder; the only difference is our fine-tune. Times are on this machine, CPU only.</footer>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const status = t => { $("status").textContent = t; };
+let recorder = null, chunks = [];
+
+// Any audio the browser can decode -> 16 kHz mono 16-bit WAV, the format the model expects.
+async function toWav(arrayBuffer) {
+  const ctx = new AudioContext();
+  const decoded = await ctx.decodeAudioData(arrayBuffer);
+  ctx.close();
+  const off = new OfflineAudioContext(1, Math.ceil(decoded.duration * 16000), 16000);
+  const src = off.createBufferSource();
+  src.buffer = decoded; src.connect(off.destination); src.start();
+  const pcm = (await off.startRendering()).getChannelData(0);
+  const buf = new ArrayBuffer(44 + pcm.length * 2), v = new DataView(buf);
+  const str = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  str(0, "RIFF"); v.setUint32(4, 36 + pcm.length * 2, true); str(8, "WAVEfmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 16000, true); v.setUint32(28, 32000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  str(36, "data"); v.setUint32(40, pcm.length * 2, true);
+  pcm.forEach((s, i) => v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, s)) * 0x7fff, true));
+  return new Blob([buf], { type: "audio/wav" });
+}
+
+async function transcribe(blob, ref) {
+  $("player").src = URL.createObjectURL(blob); $("player").hidden = false;
+  $("ref").hidden = !ref;
+  if (ref) { $("refText").textContent = ref.ref; $("refRoman").textContent = ref.ref_roman; }
+  $("grid").innerHTML = "";
+  status("Transcribing on CPU…");
+  const res = await fetch("/transcribe", { method: "POST", body: blob });
+  const data = await res.json();
+  for (const r of data.results) {
+    const ours = r.label.startsWith("Fine-tuned");
+    const card = document.createElement("div");
+    card.className = "card" + (ours ? " ours" : "");
+    const rtl = /[؀-ۿ]/.test(r.text);
+    card.innerHTML = `<h3></h3><div class="text${rtl ? " ur" : ""}" dir="${rtl ? "rtl" : "ltr"}"></div><div class="meta"></div>`;
+    card.querySelector("h3").textContent = r.label;
+    card.querySelector(".text").textContent = r.text || "(nothing)";
+    card.querySelector(".meta").textContent =
+      `${r.seconds.toFixed(1)} s for ${data.audio_seconds.toFixed(1)} s of audio` + (r.detected && !ours ? ` · language: ${r.detected}` : "");
+    $("grid").appendChild(card);
+  }
+  status(`Done. ${data.audio_seconds.toFixed(1)} s of audio.`);
+}
+
+$("rec").onclick = async () => {
+  if (recorder) { recorder.stop(); return; }
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  recorder = new MediaRecorder(stream); chunks = [];
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    recorder = null; $("rec").textContent = "● Record"; $("rec").classList.remove("rec");
+    const wav = await toWav(await new Blob(chunks).arrayBuffer());
+    transcribe(wav, null);
+  };
+  recorder.start();
+  $("rec").textContent = "■ Stop"; $("rec").classList.add("rec");
+  status("Recording… speak Urdu, then press Stop.");
+};
+
+$("file").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  status("Converting audio…");
+  transcribe(await toWav(await f.arrayBuffer()), null);
+};
+
+let samples = [];
+fetch("/samples").then(r => r.json()).then(list => {
+  samples = list;
+  list.forEach((s, i) => $("sample").add(new Option(`Clip ${i + 1} (${s.seconds.toFixed(0)} s): ${s.ref.slice(0, 40)}…`, i)));
+});
+$("sample").onchange = async e => {
+  if (e.target.value === "") return;
+  const s = samples[e.target.value];
+  const blob = await (await fetch(`/samples/${s.file}`)).blob();
+  transcribe(blob, s);
+};
+</script>
+</body>
+</html>

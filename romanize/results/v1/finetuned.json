@@ -1,0 +1,10 @@
+{
+ "name": "finetuned",
+ "model": "runs/romanize/final",
+ "set": "test_dakshina",
+ "sentences": 4844,
+ "cer": 0.1353,
+ "wer": 0.4089,
+ "char_bleu": 76.19,
+ "chrf": 69.21
+}

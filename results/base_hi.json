@@ -1,0 +1,19 @@
+{
+ "name": "base_hi",
+ "model": "Qwen/Qwen3-ASR-0.6B",
+ "language": "Hindi",
+ "sets": {
+  "test_fleurs_hi": {
+   "clips": 418,
+   "wer": 0.1932,
+   "cer": 0.0878,
+   "output_script": {
+    "devanagari": 416,
+    "latin": 2
+   },
+   "detected_language": {
+    "Hindi": 418
+   }
+  }
+ }
+}

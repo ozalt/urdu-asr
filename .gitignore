@@ -1,0 +1,22 @@
+.venv/
+.env
+data/
+runs/
+tools/
+__pycache__/
+.ipynb_checkpoints/
+
+# Per-clip predictions: Common Voice ones contain its transcripts (the dataset may not be re-shared), Dakshina ones
+# its CC-BY-SA text. FLEURS predictions (CC-BY-4.0) are kept as evidence.
+results/*.jsonl
+!results/*fleurs*.jsonl
+results/*.log
+romanize/data*/
+romanize/results/**/*.jsonl
+
+# Laptop kit build output (1.4 GB, contains model files) and local notes
+Deliverables/urdu-asr-laptop-kit/
+Deliverables/*.zip
+Deliverables/README.md
+Deliverables/model.schema.json
+HACKATHON.md

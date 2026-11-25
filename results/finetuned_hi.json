@@ -1,0 +1,20 @@
+{
+ "name": "finetuned_hi",
+ "model": "runs/urdu-0.6b/checkpoint-1800",
+ "language": "Hindi",
+ "sets": {
+  "test_fleurs_hi": {
+   "clips": 418,
+   "wer": 0.6254,
+   "cer": 0.4608,
+   "output_script": {
+    "urdu": 216,
+    "devanagari": 196,
+    "none": 6
+   },
+   "detected_language": {
+    "Hindi": 418
+   }
+  }
+ }
+}

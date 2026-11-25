@@ -1,0 +1,29 @@
+{
+ "name": "finetuned_roman",
+ "model": "runs/urdu-0.6b/checkpoint-1800",
+ "language": "Roman urdu",
+ "sets": {
+  "test_cv_roman": {
+   "clips": 5070,
+   "wer": 0.3122,
+   "cer": 0.1226,
+   "output_script": {
+    "latin": 5070
+   },
+   "detected_language": {
+    "Roman urdu": 5070
+   }
+  },
+  "test_fleurs_roman": {
+   "clips": 298,
+   "wer": 0.3555,
+   "cer": 0.1401,
+   "output_script": {
+    "latin": 298
+   },
+   "detected_language": {
+    "Roman urdu": 298
+   }
+  }
+ }
+}

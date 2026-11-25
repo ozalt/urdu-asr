@@ -1,0 +1,50 @@
+{
+ "name": "base",
+ "model": "Qwen/Qwen3-ASR-0.6B",
+ "language": null,
+ "sets": {
+  "test_cv": {
+   "clips": 5071,
+   "wer": 1.0077,
+   "cer": 0.8432,
+   "output_script": {
+    "devanagari": 4340,
+    "urdu": 497,
+    "latin": 155,
+    "other": 70,
+    "none": 9
+   },
+   "detected_language": {
+    "Hindi": 4395,
+    "Arabic": 457,
+    "Chinese": 61,
+    "English": 56,
+    "Malay": 26,
+    "Persian": 22,
+    "Hungarian": 11,
+    "Indonesian": 9,
+    "none": 8,
+    "Russian": 6,
+    "Portuguese": 6,
+    "Thai": 5,
+    "Cantonese": 3,
+    "Italian": 2,
+    "Czech": 2,
+    "Macedonian": 1,
+    "Spanish": 1
+   }
+  },
+  "test_fleurs": {
+   "clips": 299,
+   "wer": 1.0063,
+   "cer": 0.8627,
+   "output_script": {
+    "devanagari": 298,
+    "latin": 1
+   },
+   "detected_language": {
+    "Hindi": 299
+   }
+  }
+ }
+}

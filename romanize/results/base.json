@@ -1,0 +1,10 @@
+{
+ "name": "base",
+ "model": "Qwen/Qwen3.5-0.8B",
+ "set": "test_dakshina",
+ "sentences": 4844,
+ "cer": 0.8403,
+ "wer": 1.0239,
+ "char_bleu": 2.33,
+ "chrf": 2.09
+}

@@ -1,0 +1,37 @@
+{
+ "name": "base_forced",
+ "model": "Qwen/Qwen3-ASR-0.6B",
+ "language": "Urdu",
+ "sets": {
+  "test_cv": {
+   "clips": 5071,
+   "wer": 0.5132,
+   "cer": 0.2695,
+   "output_script": {
+    "urdu": 4585,
+    "devanagari": 386,
+    "latin": 94,
+    "none": 4,
+    "other": 2
+   },
+   "detected_language": {
+    "Urdu": 5068,
+    "none": 3
+   }
+  },
+  "test_fleurs": {
+   "clips": 299,
+   "wer": 0.5857,
+   "cer": 0.3862,
+   "output_script": {
+    "urdu": 211,
+    "devanagari": 82,
+    "latin": 4,
+    "other": 2
+   },
+   "detected_language": {
+    "Urdu": 299
+   }
+  }
+ }
+}

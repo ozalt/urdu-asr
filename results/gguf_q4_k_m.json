@@ -1,0 +1,18 @@
+{
+ "name": "gguf_q4_k_m",
+ "model": "runs/urdu-0.6b/gguf/urdu-asr-0.6b-q4_k_m.gguf",
+ "language": "Urdu",
+ "sets": {
+  "test_fleurs": {
+   "clips": 299,
+   "wer": 0.2959,
+   "cer": 0.1275,
+   "output_script": {
+    "urdu": 299
+   },
+   "detected_language": {
+    "Urdu": 299
+   }
+  }
+ }
+}

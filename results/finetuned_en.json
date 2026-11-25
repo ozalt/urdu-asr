@@ -1,0 +1,18 @@
+{
+ "name": "finetuned_en",
+ "model": "runs/urdu-0.6b/checkpoint-1800",
+ "language": "English",
+ "sets": {
+  "test_fleurs_en": {
+   "clips": 647,
+   "wer": 0.0796,
+   "cer": 0.0339,
+   "output_script": {
+    "latin": 647
+   },
+   "detected_language": {
+    "English": 647
+   }
+  }
+ }
+}

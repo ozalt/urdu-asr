@@ -1,0 +1,18 @@
+{
+ "name": "base_en",
+ "model": "Qwen/Qwen3-ASR-0.6B",
+ "language": "English",
+ "sets": {
+  "test_fleurs_en": {
+   "clips": 647,
+   "wer": 0.0493,
+   "cer": 0.023,
+   "output_script": {
+    "latin": 647
+   },
+   "detected_language": {
+    "English": 647
+   }
+  }
+ }
+}

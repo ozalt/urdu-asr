@@ -1,0 +1,14 @@
+# Stage 2 (Urdu -> Roman Urdu transliterator) has its own environment: Qwen3.5 needs transformers 5.x,
+# while qwen-asr (stage 1) pins transformers 4.57.6.
+#   uv venv -p 3.12 romanize/.venv
+#   uv pip install -p romanize/.venv/bin/python torch==2.14.0 --index-url https://download.pytorch.org/whl/cu130
+#   uv pip install -p romanize/.venv/bin/python -r romanize/requirements.txt
+transformers==5.23.0
+accelerate==1.16.0
+peft==0.21.3
+datasets==5.0.1
+sacrebleu==2.6.0
+jiwer==4.0.0
+pyarrow==26.0.1
+flash-linear-attention==0.6.0   # fast kernels for Qwen3.5's linear-attention layers (falls back to slow PyTorch without)
+modelscope==1.40.3  # publish.py: ModelScope uploads

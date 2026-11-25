@@ -1,0 +1,30 @@
+# Draft. Empty '' values are still to fill (see Deliverables/README.md). Validate before the PR:
+#   python -c "import json,yaml,jsonschema; jsonschema.validate(yaml.safe_load(open('model.yaml')), json.load(open('../../../model.schema.json')))"
+project_name: Urdu Speech to Text (Urdu script and Roman Urdu)
+slug: urdu-asr
+event: qwen-local-hackathon-2026
+members:
+- github: ozalt
+one_liner: Offline Urdu speech recognition that writes Urdu script or Roman Urdu, on a laptop CPU.
+base_model: Qwen/Qwen3-ASR-0.6B
+training_tool: other
+training_platform: local-nvidia
+method: full
+dataset:
+  description: >-
+    43.5 hours of Urdu speech: Mozilla Common Voice Urdu (33,046 clips) and Google FLEURS Urdu train (2,103 clips).
+    Each clip is used twice, once with its Urdu-script transcript and once with a Roman Urdu transcript written by our
+    own Qwen3.5-0.8B romanizer and filtered by automatic checks. Tested on the Common Voice test split (5,071 clips)
+    and FLEURS test (299 clips, unseen speakers and sentences).
+  size: 70293
+  link: https://huggingface.co/datasets/zaltahir/urdu-speech-transcripts-roman
+model_link: ''
+quantization: ''
+runtime: llama.cpp
+hardware_tested: ''
+demo_video: ''
+repo_link: ''
+before_after:
+  prompt: ''
+  base_output: ''
+  finetuned_output: ''

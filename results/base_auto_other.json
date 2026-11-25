@@ -1,0 +1,33 @@
+{
+ "name": "base_auto_other",
+ "model": "Qwen/Qwen3-ASR-0.6B",
+ "language": null,
+ "sets": {
+  "test_fleurs_en": {
+   "clips": 647,
+   "wer": 0.0494,
+   "cer": 0.0231,
+   "output_script": {
+    "latin": 647
+   },
+   "detected_language": {
+    "English": 647
+   }
+  },
+  "test_fleurs_hi": {
+   "clips": 418,
+   "wer": 0.1982,
+   "cer": 0.0956,
+   "output_script": {
+    "devanagari": 409,
+    "latin": 8,
+    "urdu": 1
+   },
+   "detected_language": {
+    "Hindi": 412,
+    "Malay": 5,
+    "Persian": 1
+   }
+  }
+ }
+}
