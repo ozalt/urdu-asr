@@ -18,12 +18,12 @@ dataset:
     and FLEURS test (299 clips, unseen speakers and sentences).
   size: 70293
   link: https://huggingface.co/datasets/zaltahir/urdu-speech-transcripts-roman
-model_link: ''
-quantization: ''
+model_link: https://huggingface.co/zaltahir/qwen3-asr-0.6b-urdu
+quantization: GGUF Q8_0 (639 MB) + 16-bit audio encoder (379 MB); Q4_K_M (397 MB) also provided
 runtime: llama.cpp
 hardware_tested: ''
 demo_video: ''
-repo_link: ''
+repo_link: https://github.com/ozalt/urdu-asr
 before_after:
   prompt: ''
   base_output: ''

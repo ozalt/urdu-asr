@@ -37,7 +37,7 @@ real mistakes.
 
 | Version | Size | FLEURS Urdu | FLEURS Roman | Common Voice (500 clips) Urdu |
 | --- | --- | --- | --- | --- |
-| Full precision (bf16) | 1.9 GB | 26.1% / 10.6% | 35.5% / 14.0% | 25.4% / 9.1% |
+| Full precision (bf16) | 1.6 GB | 26.1% / 10.6% | 35.5% / 14.0% | 25.4% / 9.1% |
 | **Q8_0 GGUF** | 639 MB + 379 MB audio encoder | **25.8% / 10.4%** | **35.1% / 13.9%** | 27.3% / 10.8% |
 | Q4_K_M GGUF | 397 MB + 379 MB audio encoder | 29.6% / 12.8% | 38.3% / 15.3% | 27.8% / 10.4% |
 
