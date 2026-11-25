@@ -1,13 +1,15 @@
 """Laptop kit: run the quantized Urdu speech model on this computer's CPU, measure it, and pack the evidence.
 Linux x86-64, Python 3.9+, standard library only. See LAPTOP.md.
 
-    python3 laptop.py bench     # ~10 min: base vs fine-tuned on 20 unseen clips -> results/ + laptop-results.zip
-    python3 laptop.py demo      # http://127.0.0.1:8000 : record or upload Urdu speech, see all outputs side by side
+    python3 laptop.py demo                  # http://127.0.0.1:8000 : record or upload Urdu speech (any length)
+    python3 laptop.py transcribe notes/     # every recording in a folder -> transcripts/<name>.txt (Urdu + Roman)
+    python3 laptop.py bench                 # ~10 min: base vs fine-tuned on 20 unseen clips -> laptop-results.zip
 
 First run downloads llama.cpp (prebuilt, CPU) and any model file missing from models/.
 """
 
 import argparse
+import io
 import json
 import os
 import platform
@@ -16,7 +18,6 @@ import signal
 import subprocess
 import sys
 import tarfile
-import tempfile
 import time
 import urllib.request
 import wave
@@ -127,7 +128,7 @@ class Server:
 
     def transcribe(self, wav, language):
         t0 = time.time()
-        r = llama_client.transcribe(str(wav), language, self.url)
+        r = llama_client.transcribe(wav if isinstance(wav, bytes) else str(wav), language, self.url)
         return r.text, r.language, time.time() - t0
 
     def stop(self):
@@ -227,8 +228,8 @@ DEMO_RUNS = [("base", None, "Base Qwen3-ASR, auto language"), ("base", "Urdu", "
 
 
 def demo(threads, port=8000):
-    servers = {n: Server(n, threads) for n in ("base", "q8_0")}
     clips = samples()
+    servers = {}
 
     class Handler(BaseHTTPRequestHandler):
         def send(self, body, ctype, code=200):
@@ -251,26 +252,41 @@ def demo(threads, port=8000):
 
         def do_POST(self):  # body: a 16 kHz mono WAV made by the page
             audio = self.rfile.read(int(self.headers["Content-Length"]))
-            with tempfile.NamedTemporaryFile(suffix=".wav") as f:
-                f.write(audio)
-                f.flush()
-                with wave.open(f.name) as w:
-                    seconds = w.getnframes() / w.getframerate()
+            with wave.open(io.BytesIO(audio)) as w:
+                seconds = round(w.getnframes() / w.getframerate(), 2)
+            if self.path == "/compare":  # all four outputs, base model first
                 out = []
                 for name, lang, label in DEMO_RUNS:
-                    text, detected, sec = servers[name].transcribe(f.name, lang)
+                    text, detected, sec = servers[name].transcribe(audio, lang)
                     out.append({"label": label, "text": text, "detected": detected, "seconds": round(sec, 2)})
-            self.send(json.dumps({"audio_seconds": round(seconds, 2), "results": out}, ensure_ascii=False).encode(),
-                      "application/json")
+                return self.send(json.dumps({"audio_seconds": seconds, "results": out}, ensure_ascii=False).encode(),
+                                 "application/json")
+            # /transcribe: our model, both scripts, one JSON line per piece so long recordings show progress
+            parts = llama_client.pieces(audio)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/x-ndjson")
+            self.end_headers()
+            for i, piece in enumerate(parts, 1):
+                t0 = time.time()
+                urdu, roman = (servers["q8_0"].transcribe(piece, lang)[0] for lang in ("Urdu", "Roman urdu"))
+                self.wfile.write((json.dumps({"piece": i, "pieces": len(parts), "audio_seconds": seconds,
+                                              "urdu": urdu, "roman": roman, "seconds": round(time.time() - t0, 2)},
+                                             ensure_ascii=False) + "\n").encode())
+                self.wfile.flush()
 
         def log_message(self, *args):
             pass
 
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))  # closing the terminal also stops the model servers
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print(f"Demo running at http://127.0.0.1:{port}  (Ctrl+C to stop)", flush=True)
-    webbrowser.open(f"http://127.0.0.1:{port}")
     try:
+        httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)  # claim the port before starting the models
+    except OSError:
+        sys.exit(f"Port {port} is in use by another program. Try: python3 laptop.py demo --port 8010")
+    try:
+        for n in ("base", "q8_0"):  # one at a time, so a failed start still stops the one already running
+            servers[n] = Server(n, threads)
+        print(f"Demo running at http://127.0.0.1:{port}  (Ctrl+C to stop)", flush=True)
+        webbrowser.open(f"http://127.0.0.1:{port}")
         httpd.serve_forever()
     except (KeyboardInterrupt, SystemExit):
         pass
@@ -279,11 +295,58 @@ def demo(threads, port=8000):
             s.stop()
 
 
+AUDIO = {".wav", ".mp3", ".ogg", ".opus", ".m4a", ".aac", ".flac", ".webm", ".mp4", ".amr", ".3gp"}
+
+
+def to_wav(path):
+    """Any audio file -> 16 kHz mono WAV bytes (ffmpeg); plain WAV files work without it."""
+    if shutil.which("ffmpeg"):  # raw samples, then a proper header (a piped WAV from ffmpeg has no length in it)
+        pcm = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-ac", "1", "-ar", "16000", "-f", "s16le", "-"],
+                             capture_output=True, check=True).stdout
+        buf = io.BytesIO()
+        with wave.open(buf, "wb") as w:
+            w.setnchannels(1), w.setsampwidth(2), w.setframerate(16000)
+            w.writeframes(pcm)
+        return buf.getvalue()
+    if path.suffix.lower() == ".wav":
+        return path.read_bytes()
+    sys.exit(f"{path.name}: converting {path.suffix} files needs ffmpeg. Install it with: sudo apt install ffmpeg")
+
+
+def transcribe_files(paths, threads):
+    """Every audio file under the given files/folders -> transcripts/<name>.txt with Urdu, then Roman Urdu."""
+    files = sorted({f for p in map(Path, paths) for f in ([p] if p.is_file() else p.rglob("*"))
+                    if f.suffix.lower() in AUDIO})
+    if not files:
+        sys.exit("No audio files found (" + ", ".join(sorted(AUDIO)) + ")")
+    out = HERE / "transcripts"
+    out.mkdir(exist_ok=True)
+    server = Server("q8_0", threads)
+    try:
+        for f in files:
+            audio = to_wav(f)
+            with wave.open(io.BytesIO(audio)) as w:
+                seconds = w.getnframes() / w.getframerate()
+            t0 = time.time()
+            urdu, roman = (server.transcribe(audio, lang)[0] for lang in ("Urdu", "Roman urdu"))
+            dest = out / f"{f.stem}.txt"
+            dest.write_text(f"{urdu}\n\n{roman}\n", encoding="utf-8")
+            print(f"{f.name}: {seconds:.0f} s of audio in {time.time() - t0:.0f} s -> {dest.relative_to(HERE)}",
+                  flush=True)
+    finally:
+        server.stop()
+
+
 if __name__ == "__main__":
     assert edits("abc", "abd") == 1 and edits([], ["x"]) == 1
     assert error_rates([("ایک دو تین", "ایک دو")]) == (0.3333, 0.4)
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("what", choices=["bench", "demo"])
+    ap.add_argument("what", choices=["demo", "transcribe", "bench"])
+    ap.add_argument("paths", nargs="*", help="transcribe: audio files or folders")
     ap.add_argument("--threads", type=int, default=physical_cores(), help="CPU threads (default: physical cores)")
+    ap.add_argument("--port", type=int, default=8000, help="demo: web page port")
     a = ap.parse_args()
-    bench(a.threads) if a.what == "bench" else demo(a.threads)
+    if a.what == "transcribe":
+        transcribe_files(a.paths or ["."], a.threads)
+    else:
+        bench(a.threads) if a.what == "bench" else demo(a.threads, a.port)

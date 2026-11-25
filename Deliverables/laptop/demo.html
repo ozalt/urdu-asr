@@ -13,40 +13,57 @@
   body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, sans-serif; }
   main { max-width:1100px; margin:0 auto; padding:24px 16px 48px; }
   h1 { margin:0; font-size:26px; }
-  .sub { color:var(--muted); margin:4px 0 20px; }
+  .sub { color:var(--muted); margin:4px 0 16px; }
+  .tabs { display:flex; gap:6px; margin-bottom:12px; }
+  .tabs button { border-radius:999px; }
+  .tabs button.on { background:var(--ink); color:var(--bg); border-color:var(--ink); }
   .bar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; background:var(--card); border:1px solid var(--line);
          border-radius:12px; padding:14px; }
   button, select, label.file { font:inherit; padding:9px 16px; border-radius:8px; border:1px solid var(--line);
          background:var(--bg); color:var(--ink); cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
   button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
   button.rec { background:#c0392b; border-color:#c0392b; }
+  button.small { padding:4px 12px; font-size:14px; }
   label.file input { display:none; }
   select { max-width:100%; }
   audio { width:100%; margin-top:14px; }
   .status { color:var(--muted); margin:12px 2px; min-height:24px; }
+  .progress { height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin:-4px 0 14px; }
+  .progress div { height:100%; width:0; background:var(--accent); transition:width .3s; }
   .ref { background:var(--card); border:1px dashed var(--line); border-radius:12px; padding:12px 14px; margin-bottom:14px; }
-  .ref h3, .card h3 { margin:0 0 6px; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .ref h3, .card h3 { margin:0; font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
   .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px; }
+  .two { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:12px; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; border-top:4px solid var(--base); }
   .card.ours { border-top-color:var(--accent); }
-  .text { font-size:18px; min-height:2em; overflow-wrap:anywhere; }
+  .head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; }
+  .text { font-size:18px; min-height:2em; overflow-wrap:anywhere; white-space:pre-wrap; }
   .ur { font-family:"Noto Nastaliq Urdu","Noto Naskh Arabic","Jameel Noori Nastaleeq",serif; font-size:21px; line-height:2.1; }
   .meta { color:var(--muted); font-size:13px; margin-top:8px; }
   footer { color:var(--muted); font-size:13px; margin-top:22px; }
+  [hidden] { display:none !important; }
 </style>
 </head>
 <body>
 <main>
   <h1>Urdu Speech to Text</h1>
-  <p class="sub">Qwen3-ASR-0.6B fine-tuned for Urdu script and Roman Urdu. Running offline on this laptop's CPU with llama.cpp.</p>
+  <p class="sub">Speak Urdu or drop in a voice note; get Urdu script and Roman Urdu. Runs offline on this computer's CPU.</p>
+
+  <div class="tabs">
+    <button id="tabUse" class="on">Transcribe</button>
+    <button id="tabCmp">Compare with the original model</button>
+  </div>
 
   <div class="bar">
     <button id="rec" class="primary">● Record</button>
-    <label class="file">Upload audio<input id="file" type="file" accept="audio/*"></label>
+    <label class="file">Upload audio or voice note<input id="file" type="file"
+      accept="audio/*,.opus,.ogg,.m4a,.mp3,.wav,.aac,.amr,.webm,.mp4"></label>
     <select id="sample"><option value="">Unseen test clip (FLEURS)…</option></select>
   </div>
   <audio id="player" controls hidden></audio>
-  <div class="status" id="status">Record yourself speaking Urdu, upload a file, or pick a test clip.</div>
+  <div class="status" id="status">Record yourself speaking Urdu, upload a recording of any length, or pick a test clip.</div>
+  <div class="progress" id="progress" hidden><div></div></div>
 
   <div class="ref" id="ref" hidden>
     <h3>What was said (human transcript)</h3>
@@ -54,15 +71,40 @@
     <div class="text" id="refRoman"></div>
     <div class="meta">Roman Urdu line: the transcript romanized by our Qwen3.5-0.8B romanizer.</div>
   </div>
-  <div class="grid" id="grid"></div>
-  <footer>Both models: Q8_0 decoder with a 16-bit audio encoder; the only difference is our fine-tune. Times are on this machine, CPU only.</footer>
+
+  <div class="two" id="use" hidden>
+    <div class="card ours">
+      <div class="head"><h3>Urdu</h3>
+        <span><button class="small" data-copy="urduText">Copy</button> <button class="small" data-save="urdu">Save .txt</button></span></div>
+      <div class="text ur" dir="rtl" id="urduText"></div>
+    </div>
+    <div class="card ours">
+      <div class="head"><h3>Roman Urdu</h3>
+        <span><button class="small" data-copy="romanText">Copy</button> <button class="small" data-save="roman">Save .txt</button></span></div>
+      <div class="text" id="romanText"></div>
+    </div>
+  </div>
+  <div class="grid" id="grid" hidden></div>
+
+  <footer id="foot">Fine-tuned Qwen3-ASR-0.6B, 8-bit (Q8_0), llama.cpp on CPU. Recordings longer than 30 s are split at pauses.</footer>
 </main>
 <script>
 const $ = id => document.getElementById(id);
 const status = t => { $("status").textContent = t; };
-let recorder = null, chunks = [];
+let recorder = null, chunks = [], mode = "use", busy = false;
 
-// Any audio the browser can decode -> 16 kHz mono 16-bit WAV, the format the model expects.
+function setMode(m) {
+  mode = m;
+  $("tabUse").classList.toggle("on", m === "use"); $("tabCmp").classList.toggle("on", m === "cmp");
+  $("use").hidden = true; $("grid").hidden = true; $("progress").hidden = true;
+  $("foot").textContent = m === "use"
+    ? "Fine-tuned Qwen3-ASR-0.6B, 8-bit (Q8_0), llama.cpp on CPU. Recordings longer than 30 s are split at pauses."
+    : "Both models: Q8_0 decoder with a 16-bit audio encoder; the only difference is our fine-tune. Times are on this machine, CPU only.";
+}
+$("tabUse").onclick = () => setMode("use");
+$("tabCmp").onclick = () => setMode("cmp");
+
+// Any audio the browser can decode (WAV, MP3, OGG/Opus voice notes, M4A...) -> 16 kHz mono 16-bit WAV.
 async function toWav(arrayBuffer) {
   const ctx = new AudioContext();
   const decoded = await ctx.decodeAudioData(arrayBuffer);
@@ -81,20 +123,59 @@ async function toWav(arrayBuffer) {
   return new Blob([buf], { type: "audio/wav" });
 }
 
-async function transcribe(blob, ref) {
+async function run(blob, ref) {
+  if (busy) return;
+  busy = true; $("rec").disabled = true;
   $("player").src = URL.createObjectURL(blob); $("player").hidden = false;
   $("ref").hidden = !ref;
   if (ref) { $("refText").textContent = ref.ref; $("refRoman").textContent = ref.ref_roman; }
-  $("grid").innerHTML = "";
+  try { mode === "use" ? await transcribe(blob) : await compare(blob); }
+  catch (e) { status("Something went wrong: " + e.message); }
+  busy = false; $("rec").disabled = false;
+}
+
+// Transcribe: our model, both scripts, text appears piece by piece.
+async function transcribe(blob) {
+  $("use").hidden = false; $("grid").hidden = true;
+  $("urduText").textContent = ""; $("romanText").textContent = "";
+  const bar = $("progress"); bar.hidden = false; bar.firstElementChild.style.width = "0";
   status("Transcribing on CPU…");
+  const t0 = performance.now();
   const res = await fetch("/transcribe", { method: "POST", body: blob });
-  const data = await res.json();
+  const reader = res.body.getReader(), dec = new TextDecoder();
+  let pending = "", last = null;
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    pending += dec.decode(value, { stream: true });
+    let nl;
+    while ((nl = pending.indexOf("\n")) >= 0) {
+      const p = JSON.parse(pending.slice(0, nl)); pending = pending.slice(nl + 1);
+      const sep = t => t.textContent ? " " : "";
+      $("urduText").textContent += sep($("urduText")) + p.urdu;
+      $("romanText").textContent += sep($("romanText")) + p.roman;
+      bar.firstElementChild.style.width = `${100 * p.piece / p.pieces}%`;
+      status(`Part ${p.piece} of ${p.pieces} done…`);
+      last = p;
+    }
+  }
+  const took = (performance.now() - t0) / 1000;
+  if (last) status(`Done: ${last.audio_seconds.toFixed(0)} s of audio in ${took.toFixed(0)} s` +
+                   (last.pieces > 1 ? `, in ${last.pieces} parts.` : "."));
+}
+
+// Compare: base model (auto, told Urdu) against ours (Urdu, Roman Urdu) on the same audio.
+async function compare(blob) {
+  $("use").hidden = true; $("grid").hidden = false; $("progress").hidden = true;
+  $("grid").innerHTML = "";
+  status("Running both models on CPU…");
+  const data = await (await fetch("/compare", { method: "POST", body: blob })).json();
   for (const r of data.results) {
     const ours = r.label.startsWith("Fine-tuned");
     const card = document.createElement("div");
     card.className = "card" + (ours ? " ours" : "");
     const rtl = /[؀-ۿ]/.test(r.text);
-    card.innerHTML = `<h3></h3><div class="text${rtl ? " ur" : ""}" dir="${rtl ? "rtl" : "ltr"}"></div><div class="meta"></div>`;
+    card.innerHTML = `<div class="head"><h3></h3></div><div class="text${rtl ? " ur" : ""}" dir="${rtl ? "rtl" : "ltr"}"></div><div class="meta"></div>`;
     card.querySelector("h3").textContent = r.label;
     card.querySelector(".text").textContent = r.text || "(nothing)";
     card.querySelector(".meta").textContent =
@@ -104,6 +185,17 @@ async function transcribe(blob, ref) {
   status(`Done. ${data.audio_seconds.toFixed(1)} s of audio.`);
 }
 
+document.querySelectorAll("[data-copy]").forEach(b => b.onclick = async () => {
+  await navigator.clipboard.writeText($(b.dataset.copy).textContent);
+  b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy", 1200);
+});
+document.querySelectorAll("[data-save]").forEach(b => b.onclick = () => {
+  const text = $(b.dataset.save + "Text").textContent;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text + "\n"], { type: "text/plain;charset=utf-8" }));
+  a.download = `transcript-${b.dataset.save}.txt`; a.click();
+});
+
 $("rec").onclick = async () => {
   if (recorder) { recorder.stop(); return; }
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -112,8 +204,7 @@ $("rec").onclick = async () => {
   recorder.onstop = async () => {
     stream.getTracks().forEach(t => t.stop());
     recorder = null; $("rec").textContent = "● Record"; $("rec").classList.remove("rec");
-    const wav = await toWav(await new Blob(chunks).arrayBuffer());
-    transcribe(wav, null);
+    run(await toWav(await new Blob(chunks).arrayBuffer()), null);
   };
   recorder.start();
   $("rec").textContent = "■ Stop"; $("rec").classList.add("rec");
@@ -122,8 +213,10 @@ $("rec").onclick = async () => {
 
 $("file").onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
-  status("Converting audio…");
-  transcribe(await toWav(await f.arrayBuffer()), null);
+  status("Reading audio…");
+  try { run(await toWav(await f.arrayBuffer()), null); }
+  catch { status("This browser cannot read that file. Try Chrome or Firefox, or convert it to MP3/WAV."); }
+  e.target.value = "";
 };
 
 let samples = [];
@@ -134,8 +227,7 @@ fetch("/samples").then(r => r.json()).then(list => {
 $("sample").onchange = async e => {
   if (e.target.value === "") return;
   const s = samples[e.target.value];
-  const blob = await (await fetch(`/samples/${s.file}`)).blob();
-  transcribe(blob, s);
+  run(await (await fetch(`/samples/${s.file}`)).blob(), s);
 };
 </script>
 </body>

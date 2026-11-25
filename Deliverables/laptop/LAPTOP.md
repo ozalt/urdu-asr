@@ -40,36 +40,55 @@ audio, so 0.25 means a 10-second clip is transcribed in 2.5 seconds. At the end 
 If it is very slow, try `python3 laptop.py bench --threads 8`. The default is one thread per physical core (4 on an
 i5-1145G7), usually the fastest.
 
-## 3. Try the demo (5 min)
+## 3. Use it (5 min)
 
 ```bash
 python3 laptop.py demo
 ```
 
-The browser opens `http://127.0.0.1:8000`. Allow the microphone. Then try all three inputs:
-- **Record**: speak a sentence of Urdu, press Stop.
-- **Upload audio**: any audio file, such as a WhatsApp voice note.
-- **Unseen test clip**: a FLEURS clip, with the human transcript shown above the results.
+The browser opens `http://127.0.0.1:8000` (if that port is busy: `python3 laptop.py demo --port 8010`). Allow the
+microphone. The page has two tabs:
 
-Each input gets four answers: the original model (auto, then told Urdu) and our model (Urdu script, Roman Urdu), each
-with the time it took. Stop with Ctrl+C in the terminal.
+**Transcribe** (opens first): the everyday tool.
+- **Record**: speak Urdu, press Stop.
+- **Upload audio or voice note**: any length. For a WhatsApp voice note, save it from the phone (or WhatsApp Web:
+  download) and upload the `.opus`/`.ogg` file.
+- You get Urdu script and Roman Urdu side by side, with **Copy** and **Save .txt** buttons. Recordings longer than
+  30 seconds are cut at pauses and the text appears part by part, with a progress bar.
+
+**Compare with the original model**: the same inputs, but four answers: the original Qwen3-ASR (left to pick the
+language, then told Urdu) next to ours (Urdu, Roman Urdu), each with the time it took. Pick an **Unseen test clip** to
+also see the human transcript.
+
+Stop with Ctrl+C in the terminal.
+
+**A whole folder at once** (interviews, lectures, a voice-note archive):
+
+```bash
+sudo apt install ffmpeg                  # once; needed for .opus, .ogg, .m4a, .mp3 (plain .wav works without it)
+python3 laptop.py transcribe ~/voice-notes/
+```
+
+Every recording becomes `transcripts/<name>.txt`: Urdu first, then Roman Urdu.
 
 ## 4. Record the video (2 to 3 minutes long)
 
-Install a screen recorder once: `sudo apt install obs-studio` (or use Spectacle, Kubuntu's screenshot tool, if your
+Before recording, put one or two **real Urdu voice notes** (yours, or a relative's with permission) in a folder, ideally
+30 seconds to 2 minutes long. Install a screen recorder once: `sudo apt install obs-studio` (or Spectacle, if your
 version has "Record screen"). Record the full screen at 1080p, with the microphone on.
 
 Suggested script:
 
 | Time | Show | Say |
 | --- | --- | --- |
-| 0:00 to 0:20 | Title page or the demo page | Problem: most Pakistanis type Urdu in Roman letters; voice-to-text for Urdu is poor and usually goes to the cloud |
-| 0:20 to 0:40 | Terminal: `lscpu \| head -15`, `free -h`, then **turn Wi-Fi off** | "This is a normal laptop: i5, 12 GB, no GPU, and now no internet." |
-| 0:40 to 0:50 | `python3 laptop.py demo` | One command starts everything |
-| 0:50 to 1:30 | Pick an unseen test clip | Original model writes Hindi script; told Urdu it gets about half the words wrong; ours matches the human transcript, in both scripts. Point at the seconds taken |
-| 1:30 to 2:10 | Record yourself speaking Urdu, then upload a voice note | It works on your own voice, in real time on a CPU |
-| 2:10 to 2:40 | `results/summary.md`, plus the results table from the write-up | Numbers: word error rate 51% to 25% (Urdu), on test sets never seen in training; model size; RAM |
-| 2:40 to 3:00 | Hugging Face page | Where to get it; what still fails (English loanwords, other languages degrade) |
+| 0:00 to 0:20 | The demo page | The problem: Pakistanis send Urdu voice notes all day and type in Roman Urdu; Urdu speech-to-text is poor and usually goes to the cloud |
+| 0:20 to 0:35 | Terminal: `lscpu \| head -15`, `free -h`, then **turn Wi-Fi off** | "A normal laptop: i5, 12 GB, no GPU, and now no internet." |
+| 0:35 to 0:45 | `python3 laptop.py demo` | One command |
+| 0:45 to 1:25 | **Transcribe** tab: upload a real voice note | Text appears part by part in Urdu and Roman Urdu; press Copy and paste it into a chat or a document |
+| 1:25 to 1:45 | Record yourself saying a sentence | Works on a live voice too |
+| 1:45 to 2:15 | **Compare** tab, an unseen test clip | Proof the training worked: the original model writes Hindi script even when told Urdu; ours matches the human transcript |
+| 2:15 to 2:40 | Terminal: `python3 laptop.py transcribe ~/voice-notes/`, then open a `.txt` | A whole folder at once, for interviews or lectures |
+| 2:40 to 3:00 | `results/summary.md` and the Hugging Face page | Numbers (word errors 51% to 25%, model under 1 GB, about 2 GB RAM); what still fails (loanwords, other languages degrade); where to get it |
 
 Keep it under 3 minutes. Upload it to YouTube as **Unlisted** (public link, not listed in search) and send me the link.
 
@@ -79,5 +98,6 @@ Keep it under 3 minutes. Upload it to YouTube as **Unlisted** (public link, not 
   close apps and re-run).
 - **Microphone gives nothing**: check the input device in the system settings (Plasma: Audio volume, Input devices);
   Firefox and Chrome both allow the microphone on `127.0.0.1`.
-- **Port already in use**: something else uses port 8000 or 8081 to 8083. Reboot, or stop the other program.
+- **Port already in use**: for the page, `python3 laptop.py demo --port 8010`. The models use ports 8081 to 8083;
+  if those are busy, stop the other program or reboot.
 - **Download fails**: check the internet once; files that finished downloading are kept, so re-running continues.

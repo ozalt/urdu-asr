@@ -118,9 +118,17 @@ prompt the Python package uses, ending in `language Urdu<asr_text>`.
 ## Run it
 
 **On a laptop, one command** (Linux, Python 3, nothing to install): see
-[Deliverables/laptop/LAPTOP.md](Deliverables/laptop/LAPTOP.md). `laptop.py demo` opens a browser page with
-microphone, upload and test-clip inputs, showing the base model and ours side by side; `laptop.py bench` measures
-speed, RAM and accuracy on 20 unseen clips.
+[Deliverables/laptop/LAPTOP.md](Deliverables/laptop/LAPTOP.md).
+- `laptop.py demo` opens a browser app. **Transcribe**: record or upload a voice note of any length, get Urdu and
+  Roman Urdu with Copy and Save buttons (long recordings are cut at pauses and appear part by part). **Compare**: the
+  original model and ours side by side on the same audio.
+- `laptop.py transcribe <folder>` turns every recording in a folder (WhatsApp `.opus`, `.mp3`, `.m4a`, `.wav`...) into
+  a text file, for interviews, lectures or a voice-note archive.
+- `laptop.py bench` measures speed, RAM and accuracy on 20 unseen clips.
+
+Long audio: the model was trained on clips of 30 s or less, so `llama_client.py` cuts longer WAV audio at its
+quietest moment between 15 and 28 s into each piece. On a 61 s recording this keeps WER at 17%; sent whole, the
+output stopped halfway (58% WER).
 
 **With llama.cpp directly:**
 
