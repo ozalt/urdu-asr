@@ -44,18 +44,23 @@ https://huggingface.co/datasets/zaltahir/urdu-speech-transcripts-roman.
 
 ## Training
 
-- Base: `Qwen/Qwen3-ASR-0.6B` (Apache-2.0), audio encoder plus Qwen3 decoder, 0.94B parameters.
+- Base: `Qwen/Qwen3-ASR-0.6B` (Apache-2.0) at revision `5eb144179a02acc5e5ba31e748d22b0cf3e303b0`, audio
+  encoder plus Qwen3 decoder, 0.94B parameters.
 - Method: **full fine-tune** (all weights), the official Qwen3-ASR SFT script on Hugging Face Transformers, with one
   fix (gradient accumulation loss scaling).
 - Settings: 2 epochs, learning rate 2e-5, effective batch 64 (2 x 32 accumulation), bf16.
 - Output format: `language Urdu<asr_text>...` or `language Roman urdu<asr_text>...`; the tag picks the script.
 - Hardware: one RTX 5060 Ti 16 GB. Training time: about 2.2 hours (2,198 updates).
 - Checkpoint: lowest dev loss (update 1,800 of 2,198).
+- Software: Python 3.12.3, PyTorch 2.14.0 (CUDA 13.0), transformers 4.57.6, accelerate 1.12.0, qwen-asr 0.0.6;
+  GGUF conversion and quantization with llama.cpp b12675.
 
 ## Run it locally
 
 Runtime: llama.cpp (`llama-server`), CPU only. Quantization: GGUF Q8_0 decoder (639 MB) plus the audio encoder kept
 at 16 bit (379 MB); a Q4_K_M decoder (397 MB) is also published.
+Context 4096 tokens; audio goes in as pieces of at most 30 s (longer recordings are cut at pauses); empty
+system prompt; greedy decoding (temperature 0), up to 512 output tokens per piece.
 
 Easiest: the app (Linux, Python 3, nothing to install). The first run downloads a prebuilt llama.cpp and the model
 files from Hugging Face.

@@ -1,5 +1,3 @@
-# Draft. Empty '' values are still to fill (see Deliverables/README.md). Validate before the PR:
-#   python -c "import json,yaml,jsonschema; jsonschema.validate(yaml.safe_load(open('model.yaml')), json.load(open('../../../model.schema.json')))"
 project_name: Urdu Speech to Text (Urdu script and Roman Urdu)
 slug: urdu-asr
 event: qwen-local-hackathon-2026
@@ -21,10 +19,24 @@ dataset:
 model_link: https://huggingface.co/zaltahir/qwen3-asr-0.6b-urdu
 quantization: GGUF Q8_0 (639 MB) + 16-bit audio encoder (379 MB); Q4_K_M (397 MB) also provided
 runtime: llama.cpp
-hardware_tested: ''
+hardware_tested: >-
+  CPU only, no GPU: AMD Ryzen 5 7600 limited to 4 cores and 8 GB RAM, Linux Mint 22.1, llama.cpp b12675, 4 threads.
+  On 20 unseen FLEURS clips, Q8_0 needs 0.28 s of compute per second of audio with 2.3 GB peak RAM (Q4_K_M 0.21 s,
+  2.2 GB). Loads in about 1 s. Trained on one RTX 5060 Ti 16 GB (about 2.2 hours).
 demo_video: ''
 repo_link: https://github.com/ozalt/urdu-asr
 before_after:
-  prompt: ''
-  base_output: ''
-  finetuned_output: ''
+  prompt: >-
+    FLEURS Urdu test clip (13.8 s, speaker and sentence never seen in training). Human transcript: اس [ویلز] نے در
+    اصل شروع سے ہی ہم سے جھوٹ بولا۔ سب سے پہلے تو اس طرح کے اقدام کرکے جیسے یہ قانونی وجوہات سے ہو۔ دوسرے نمبر پر، یہ
+    ظاہر کرکے کہ وہ ہماری بات سن رہا ہے، بالکل اپنے حذف کرنے کے فن کی طرح۔
+  base_output: >-
+    (base Qwen3-ASR-0.6B, told the language is Urdu; WER 100%) इसने دراصل शुरू से ही हमसे झूठ बोला, सबसे पहले तो इस
+    तरह के आक्दाम करके जैसा ये कानूनी वजह से हो, दूसरे नंबर पर ये जाहिर करके वो हमारी बात सुन रहा है, बल्कि अपने हजफ
+    करने की फन की तरह.
+  finetuned_output: >-
+    (fine-tuned, Urdu script; WER 23%) اس نے دراصل شروع سے ہی ہم سے جھوٹ بولا۔ سب سے پہلے تو اس طرح کے اقدام کر کے
+    جیسا یہ قانونی وجوہات سے ہو، دوسرا نمبر پر یہ ظاہر کر کے وہ ہماری بات سن رہا ہے، بلکہ اپنے حذف کرنے کی فن کی طرح۔
+    Roman Urdu: is ne darasal shuru se hi hum se jhoot bola. sab se pehlay to is terhan ke ikhdam kar ke jaisay yeh
+    qanooni wajah se ho, dosray number par yeh zahir kar ke woh hamari baat sun rahay, balkay apne hizab karne ki fun
+    ki terhan.
