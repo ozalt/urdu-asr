@@ -37,6 +37,16 @@ For each it prints the word error rate, character error rate and **real-time fac
 audio, so 0.25 means a 10-second clip is transcribed in 2.5 seconds. At the end it shows two tables, then packs
 `results/` into **`laptop-results.zip`**. Bring that zip back; it also records the CPU, RAM and OS automatically.
 
+**No laptop at hand?** Run it on any Linux PC limited to laptop-like resources (4 physical cores, 8 GB RAM); the
+report records the limits it ran under:
+
+```bash
+lscpu -e=CPU,CORE                         # pick 4 CPUs on 4 different cores (here 0-3)
+systemd-run --user --scope -p MemoryMax=8G taskset -c 0-3 python3 laptop.py bench --threads 4
+```
+
+A desktop core is faster than a laptop core, so a real laptop will be somewhat slower than such a run.
+
 If it is very slow, try `python3 laptop.py bench --threads 8`. The default is one thread per physical core (4 on an
 i5-1145G7), usually the fastest.
 

@@ -1,0 +1,91 @@
+{
+ "hardware": {
+  "os": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+  "cpu_threads": 12,
+  "cpu_cores": 6,
+  "llama_cpp": "b12675 (prebuilt CPU build, no GPU)",
+  "cpu": "AMD Ryzen 5 7600 6-Core Processor",
+  "ram_gb": 14.7,
+  "distro": "Linux Mint 22.1",
+  "cpus_allowed": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "memory_limit_gb": 8.0
+ },
+ "threads": 4,
+ "clips": 20,
+ "audio_seconds": 205.20000000000002,
+ "models": {
+  "base": {
+   "files": {
+    "Qwen3-ASR-0.6B-Q8_0.gguf": 805,
+    "mmproj-Qwen3-ASR-0.6B-BF16.gguf": 379
+   },
+   "load_seconds": 1.0,
+   "peak_ram_mb": 2492
+  },
+  "q8_0": {
+   "files": {
+    "urdu-asr-0.6b-q8_0.gguf": 639,
+    "mmproj-urdu-asr-0.6b-f16.gguf": 379
+   },
+   "load_seconds": 1.0,
+   "peak_ram_mb": 2261
+  },
+  "q4_k_m": {
+   "files": {
+    "urdu-asr-0.6b-q4_k_m.gguf": 397,
+    "mmproj-urdu-asr-0.6b-f16.gguf": 379
+   },
+   "load_seconds": 1.0,
+   "peak_ram_mb": 2232
+  }
+ },
+ "runs": [
+  {
+   "run": "Base, auto language",
+   "wer": 1.0017,
+   "cer": 0.8508,
+   "seconds_taken": 73.3,
+   "real_time_factor": 0.357
+  },
+  {
+   "run": "Base, told Urdu",
+   "wer": 0.7488,
+   "cer": 0.5576,
+   "seconds_taken": 61.5,
+   "real_time_factor": 0.3
+  },
+  {
+   "run": "Fine-tuned Q8_0, Urdu",
+   "wer": 0.2213,
+   "cer": 0.0928,
+   "seconds_taken": 57.5,
+   "real_time_factor": 0.28
+  },
+  {
+   "run": "Fine-tuned Q8_0, Roman",
+   "wer": 0.3062,
+   "cer": 0.1205,
+   "seconds_taken": 43.3,
+   "real_time_factor": 0.211
+  },
+  {
+   "run": "Fine-tuned Q4_K_M, Urdu",
+   "wer": 0.2346,
+   "cer": 0.0992,
+   "seconds_taken": 44.2,
+   "real_time_factor": 0.215
+  },
+  {
+   "run": "Fine-tuned Q4_K_M, Roman",
+   "wer": 0.3228,
+   "cer": 0.1381,
+   "seconds_taken": 34.8,
+   "real_time_factor": 0.17
+  }
+ ]
+}

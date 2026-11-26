@@ -26,10 +26,11 @@ import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-import llama_client
-from common import for_scoring
-
 HERE = Path(__file__).resolve().parent
+sys.path.append(str(HERE.parent.parent))  # in the git repo, these two live at the root; in the kit, next to this file
+import llama_client  # noqa: E402
+from common import for_scoring  # noqa: E402
+
 MODELS, RESULTS, LLAMA = HERE / "models", HERE / "results", HERE / "llama.cpp"
 LLAMA_TAG = "b12675"  # llama.cpp release the model was converted and tested with
 LLAMA_URL = f"https://github.com/ggml-org/llama.cpp/releases/download/{LLAMA_TAG}/llama-{LLAMA_TAG}-bin-ubuntu-x64.tar.gz"
@@ -93,6 +94,17 @@ def hardware():
     if osr.exists():
         info["distro"] = dict(l.split("=", 1) for l in osr.read_text().splitlines() if "=" in l).get(
             "PRETTY_NAME", "").strip('"')
+    # Limits this run was given (taskset / systemd-run), so results never overstate the hardware used
+    allowed = os.sched_getaffinity(0)
+    if len(allowed) < os.cpu_count():
+        info["cpus_allowed"] = sorted(allowed)
+    try:
+        group = Path("/proc/self/cgroup").read_text().strip().split("::")[-1]
+        limit = (Path("/sys/fs/cgroup") / group.lstrip("/") / "memory.max").read_text().strip()
+        if limit != "max":
+            info["memory_limit_gb"] = round(int(limit) / 1024 ** 3, 1)
+    except (OSError, ValueError):
+        pass
     return info
 
 
@@ -204,9 +216,11 @@ def bench(threads):
     (RESULTS / "bench.json").write_text(json.dumps(report, indent=1, ensure_ascii=False))
     with open(RESULTS / "outputs.jsonl", "w", encoding="utf-8") as f:
         f.writelines(json.dumps(o, ensure_ascii=False) + "\n" for o in outputs)
+    limits = (f" Limited to {len(hw['cpus_allowed'])} CPUs {hw['cpus_allowed']}" if "cpus_allowed" in hw else "") + \
+             (f" and {hw['memory_limit_gb']} GB RAM." if "memory_limit_gb" in hw else "")
     lines = [f"Hardware: {hw.get('cpu')} ({hw['cpu_cores']} cores, {hw['cpu_threads']} threads), "
              f"{hw.get('ram_gb')} GB RAM, {hw.get('distro', hw['os'])}. CPU only, {threads} threads, "
-             f"llama.cpp {LLAMA_TAG}.", f"{len(clips)} FLEURS test clips never seen in training, {audio_s:.0f} s "
+             f"llama.cpp {LLAMA_TAG}.{limits}", f"{len(clips)} FLEURS test clips never seen in training, {audio_s:.0f} s "
              "of audio. Real-time factor = processing time / audio length (below 1 = faster than real time).", "",
              "| Run | WER | CER | Real-time factor |", "| --- | --- | --- | --- |"]
     lines += [f"| {r['run']} | {r['wer']:.1%} | {r['cer']:.1%} | {r['real_time_factor']:.2f} |"

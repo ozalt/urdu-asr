@@ -43,9 +43,18 @@ real mistakes.
 
 8-bit costs essentially nothing; 4-bit costs 2 to 4 points of WER. The audio encoder stays at 16 bit.
 
-**On a laptop** (Intel i5-1145G7, 4 cores, 12 GB RAM, Kubuntu, CPU only): TODO from `laptop.py bench`.
-On a desktop CPU (Ryzen 5 7600, 4 threads), Q8_0 transcribes a 10-second clip in about 3 to 5 seconds with about
-2.2 GB of RAM.
+**Speed and memory, CPU only** (Ryzen 5 7600 limited to 4 cores and 8 GB RAM, no GPU; 20 unseen FLEURS clips, 205 s
+of audio; `laptop.py bench`, full report in [results/cpu_bench](results/cpu_bench/summary.md)):
+
+| Model | WER / CER | Seconds of work per second of audio | Peak RAM |
+| --- | --- | --- | --- |
+| Base, told Urdu | 74.9% / 55.8% | 0.30 | 2.5 GB |
+| **Fine-tuned Q8_0, Urdu** | **22.1% / 9.3%** | **0.28** | **2.3 GB** |
+| Fine-tuned Q8_0, Roman Urdu | 30.6% / 12.0% | 0.21 | 2.3 GB |
+| Fine-tuned Q4_K_M, Urdu | 23.5% / 9.9% | 0.21 | 2.2 GB |
+
+A 10-second voice note takes about 3 seconds; a 1-minute voice note about 25 to 30 seconds for both scripts. Models load in
+about 1 second.
 
 ### One clip, before and after
 
@@ -117,7 +126,7 @@ prompt the Python package uses, ending in `language Urdu<asr_text>`.
 
 ## Run it
 
-**On a laptop, one command** (Linux, Python 3, nothing to install): see
+**On any Linux computer, one command** (Python 3, nothing to install, no GPU): see
 [Deliverables/laptop/LAPTOP.md](Deliverables/laptop/LAPTOP.md).
 - `laptop.py demo` opens a browser app. **Transcribe**: record or upload a voice note of any length, get Urdu and
   Roman Urdu with Copy and Save buttons (long recordings are cut at pauses and appear part by part). **Compare**: the

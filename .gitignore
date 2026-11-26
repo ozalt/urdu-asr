@@ -20,3 +20,10 @@ Deliverables/*.zip
 Deliverables/README.md
 Deliverables/model.schema.json
 HACKATHON.md
+
+# Made when the app runs from the repo (downloads, outputs)
+Deliverables/laptop/models/
+Deliverables/laptop/llama.cpp/
+Deliverables/laptop/results/
+Deliverables/laptop/transcripts/
+Deliverables/laptop/laptop-results.zip
