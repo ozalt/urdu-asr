@@ -53,7 +53,8 @@ of audio; `laptop.py bench`, full report in [results/cpu_bench](results/cpu_benc
 | Fine-tuned Q8_0, Roman Urdu | 30.6% / 12.0% | 0.21 | 2.3 GB |
 | Fine-tuned Q4_K_M, Urdu | 23.5% / 9.9% | 0.21 | 2.2 GB |
 
-A 10-second voice note takes about 3 seconds; a 1-minute voice note about 25 to 30 seconds for both scripts. Models load in
+One script for a 10-second voice note takes about 3 seconds. In the app (both scripts, 4 cores), a 14-second voice note
+took 8 seconds and a 1-minute one 34 seconds. Models load in
 about 1 second.
 
 ### One clip, before and after

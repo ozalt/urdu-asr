@@ -89,7 +89,7 @@ Measured with `laptop.py bench`, CPU only: AMD Ryzen 5 7600 limited to 4 cores a
 | Fine-tuned Q8_0, Roman Urdu | 30.6% / 12.0% | 0.21 | 2.3 GB |
 | Fine-tuned Q4_K_M, Urdu | 23.5% / 9.9% | 0.21 | 2.2 GB |
 
-A 10-second clip takes about 3 seconds; a 1-minute voice note about 25 to 30 seconds for both scripts.
+In the app, writing both scripts on 4 cores, a 14-second voice note took 8 seconds and a 1-minute one 34 seconds.
 
 ## Before and after
 
