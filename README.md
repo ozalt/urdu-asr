@@ -14,7 +14,7 @@ to 8 bits, it keeps its accuracy and runs faster than real time on an ordinary C
 | Roman Urdu training labels | [zaltahir/urdu-speech-transcripts-roman](https://huggingface.co/datasets/zaltahir/urdu-speech-transcripts-roman) |
 | Romanizer used to make them | [zaltahir/qwen3.5-0.8b-urdu-romanizer](https://huggingface.co/zaltahir/qwen3.5-0.8b-urdu-romanizer) |
 | Run it on a laptop | [Deliverables/laptop/LAPTOP.md](Deliverables/laptop/LAPTOP.md) |
-| Demo video | TODO |
+| Demo video | [LinkedIn post](https://www.linkedin.com/posts/ozal-tahir_qwenlocalhackathon-activity-7531971240006414336-sRm4) |
 
 ## Results
 

@@ -1,7 +1,7 @@
 # Urdu Speech to Text (Urdu script and Roman Urdu)
 
 Model: https://huggingface.co/zaltahir/qwen3-asr-0.6b-urdu · Code and full write-up: https://github.com/ozalt/urdu-asr
-· Demo video: TODO
+· Demo video: https://www.linkedin.com/posts/ozal-tahir_qwenlocalhackathon-activity-7531971240006414336-sRm4
 
 ## What it does
 

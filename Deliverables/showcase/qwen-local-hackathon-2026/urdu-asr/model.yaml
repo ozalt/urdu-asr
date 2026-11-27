@@ -23,7 +23,7 @@ hardware_tested: >-
   CPU only, no GPU: AMD Ryzen 5 7600 limited to 4 cores and 8 GB RAM, Linux Mint 22.1, llama.cpp b12675, 4 threads.
   On 20 unseen FLEURS clips, Q8_0 needs 0.28 s of compute per second of audio with 2.3 GB peak RAM (Q4_K_M 0.21 s,
   2.2 GB). Loads in about 1 s. Trained on one RTX 5060 Ti 16 GB (about 2.2 hours).
-demo_video: ''
+demo_video: https://www.linkedin.com/posts/ozal-tahir_qwenlocalhackathon-activity-7531971240006414336-sRm4
 repo_link: https://github.com/ozalt/urdu-asr
 before_after:
   prompt: >-
